@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createTripSchema, joinSchema } from "@/lib/schemas";
+import {
+  createTripSchema,
+  createWishSchema,
+  joinSchema,
+  normalizeTags,
+  updateWishSchema,
+} from "@/lib/schemas";
 
 const valid = {
   name: "Bali",
@@ -63,5 +69,64 @@ describe("joinSchema", () => {
     expect(joinSchema.safeParse({ yourName: "  " }).success).toBe(false);
     expect(joinSchema.safeParse({ yourName: "x".repeat(30) }).success).toBe(true);
     expect(joinSchema.safeParse({ yourName: "x".repeat(31) }).success).toBe(false);
+  });
+});
+
+describe("normalizeTags", () => {
+  it("trims, lowercases, strips commas and de-duplicates", () => {
+    expect(normalizeTags([" Food ", "food", "Night,Life", "", "  "])).toEqual([
+      "food",
+      "night life",
+    ]);
+  });
+});
+
+describe("createWishSchema", () => {
+  it("fills defaults and stores tags as a comma list", () => {
+    expect(
+      createWishSchema.parse({ title: " Surf ", kind: "ACTIVITY", tags: ["Beach", "beach"] }),
+    ).toEqual({
+      title: "Surf",
+      notes: null,
+      kind: "ACTIVITY",
+      priority: "NICE",
+      timeOfDay: "ANY",
+      durationHrs: 2,
+      costLevel: 1,
+      energy: 1,
+      tags: "beach",
+    });
+  });
+
+  it("enforces ranges", () => {
+    const base = { title: "x", kind: "ACTIVITY" };
+    expect(createWishSchema.safeParse({ ...base, title: "x".repeat(81) }).success).toBe(false);
+    expect(createWishSchema.safeParse({ ...base, notes: "x".repeat(501) }).success).toBe(false);
+    expect(createWishSchema.safeParse({ ...base, durationHrs: 0.25 }).success).toBe(false);
+    expect(createWishSchema.safeParse({ ...base, durationHrs: 12.5 }).success).toBe(false);
+    expect(createWishSchema.safeParse({ ...base, durationHrs: 4.5 }).success).toBe(true);
+    expect(createWishSchema.safeParse({ ...base, costLevel: 4 }).success).toBe(false);
+    expect(createWishSchema.safeParse({ ...base, energy: -1 }).success).toBe(false);
+    expect(createWishSchema.safeParse({ ...base, energy: 1.5 }).success).toBe(false);
+    expect(createWishSchema.safeParse({ ...base, timeOfDay: "LUNCH" }).success).toBe(false);
+    expect(createWishSchema.safeParse({ title: "x", kind: "WISH" }).success).toBe(false);
+  });
+
+  it("caps the number of tags", () => {
+    const tags = Array.from({ length: 11 }, (_, i) => `t${i}`);
+    expect(createWishSchema.safeParse({ title: "x", kind: "ACTIVITY", tags }).success).toBe(false);
+  });
+});
+
+describe("updateWishSchema", () => {
+  it("leaves unset fields out", () => {
+    expect(updateWishSchema.parse({ title: "New" })).toEqual({ title: "New" });
+    expect(updateWishSchema.parse({ notes: "" })).toEqual({ notes: null });
+  });
+});
+
+describe("createWishSchema tags default", () => {
+  it("stores an empty string when tags are omitted", () => {
+    expect(createWishSchema.parse({ title: "x", kind: "ACTIVITY" }).tags).toBe("");
   });
 });
