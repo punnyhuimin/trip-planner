@@ -22,7 +22,8 @@
     "test:watch": "vitest",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "rm -rf .wrangler/state && npm run db:migrate:local && npm run db:seed",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.8",
@@ -39,6 +40,7 @@
     "@types/node": "^24.19.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^5.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "eslint-config-prettier": "^10.1.8",

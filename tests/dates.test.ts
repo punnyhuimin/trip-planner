@@ -20,4 +20,9 @@ describe("dates", () => {
     expect(dayDate("2026-12-30", 3)).toBe("2027-01-02");
     expect(formatDayLabel("2026-11-02")).toBe("Mon 2 Nov");
   });
+
+  it("rejects or passes through invalid dates", () => {
+    expect(() => dayDate("nope", 0)).toThrow("Invalid date: nope");
+    expect(formatDayLabel("nope")).toBe("nope");
+  });
 });
