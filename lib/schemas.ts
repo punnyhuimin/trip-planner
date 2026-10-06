@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { parseDateOnly, tripDays } from "@/lib/dates";
-import { PRIORITIES, TIME_OF_DAY_VALUES, WISH_KINDS } from "@/lib/types";
+import { PRIORITIES, REACTION_VALUES, TIME_OF_DAY_VALUES, WISH_KINDS } from "@/lib/types";
 
 export const MAX_TRIP_DAYS = 30;
 
@@ -112,3 +112,6 @@ export type CreateWishInput = z.input<typeof createWishSchema>;
 
 export const updateWishSchema = z.object(wishFields).partial();
 export type UpdateWishInput = z.input<typeof updateWishSchema>;
+
+/** `null` clears your reaction. */
+export const reactionSchema = z.object({ value: z.enum(REACTION_VALUES).nullable() });

@@ -4,6 +4,7 @@ import {
   createWishSchema,
   joinSchema,
   normalizeTags,
+  reactionSchema,
   updateWishSchema,
 } from "@/lib/schemas";
 
@@ -128,5 +129,15 @@ describe("updateWishSchema", () => {
 describe("createWishSchema tags default", () => {
   it("stores an empty string when tags are omitted", () => {
     expect(createWishSchema.parse({ title: "x", kind: "ACTIVITY" }).tags).toBe("");
+  });
+});
+
+describe("reactionSchema", () => {
+  it("accepts the three values and null", () => {
+    for (const value of ["IN", "MAYBE", "SKIP", null]) {
+      expect(reactionSchema.parse({ value })).toEqual({ value });
+    }
+    expect(reactionSchema.safeParse({ value: "YES" }).success).toBe(false);
+    expect(reactionSchema.safeParse({}).success).toBe(false);
   });
 });
