@@ -17,7 +17,9 @@
     "db:migration:new": "node scripts/new-migration.mjs",
     "db:migrate:local": "wrangler d1 migrations apply tripmaker --local",
     "db:migrate:remote": "wrangler d1 migrations apply tripmaker --remote",
-    "db:query": "wrangler d1 execute tripmaker --local --command"
+    "db:query": "wrangler d1 execute tripmaker --local --command",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.8",
@@ -29,7 +31,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24.19.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
@@ -39,6 +41,7 @@
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "vitest": "^5.0.3",
     "wrangler": "^4.147.0"
   },
   "allowScripts": {
@@ -47,6 +50,10 @@
     "prisma@7.10.0": true,
     "unrs-resolver@1.12.2": true,
     "workerd@1.20261001.1": true,
-    "@prisma/engines@7.10.0": true
+    "@prisma/engines@7.10.0": true,
+    "fsevents": false
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
