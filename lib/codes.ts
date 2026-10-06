@@ -1,8 +1,8 @@
 import { randomBytes, randomInt } from "node:crypto";
 
-/** No 0/O or 1/I, so codes survive being read aloud or typed from a screenshot. */
-export const JOIN_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-export const JOIN_CODE_LENGTH = 6;
+import { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH } from "@/lib/codes-shared";
+
+export { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH };
 
 export function generateJoinCode(): string {
   let code = "";
