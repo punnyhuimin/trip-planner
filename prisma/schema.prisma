@@ -3,9 +3,11 @@
 // same schema works on Postgres later.
 
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
-  runtime  = "cloudflare"
+  provider      = "prisma-client"
+  output        = "../lib/generated/prisma"
+  runtime       = "cloudflare"
+  // The smaller query compiler keeps the Worker under the free plan's 3 MiB limit.
+  compilerBuild = "small"
 }
 
 // Same client for plain Node.js tooling (the seed script), which can't load
