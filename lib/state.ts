@@ -147,7 +147,8 @@ export async function buildTripState(tripId: string, meId: string): Promise<Trip
       createdAt: w.createdAt.toISOString(),
     })),
     slots,
-    warnings: detectWarnings(toPlannerInput(data), slots),
+    // Before the first plan every MUST is "unscheduled"; that isn't news.
+    warnings: slots.length > 0 ? detectWarnings(toPlannerInput(data), slots) : [],
     version: trip.version,
   };
 }

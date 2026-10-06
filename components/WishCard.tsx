@@ -38,6 +38,7 @@ export function WishCard({ wish, author, membersById, meId, onReact, ownerAction
       className="card flex flex-col gap-3 overflow-hidden border-t-4 p-4"
       style={{ borderTopColor: author.color }}
       aria-labelledby={`wish-${wish.id}`}
+      tabIndex={-1}
     >
       <div className="flex items-start justify-between gap-3">
         <h3 id={`wish-${wish.id}`} className="font-semibold leading-snug">

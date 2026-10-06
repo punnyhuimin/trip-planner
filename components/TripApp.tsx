@@ -2,6 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useState } from "react";
+import { FairnessChecklist } from "@/components/FairnessChecklist";
+import { HeadsUp } from "@/components/HeadsUp";
 import { MemberDot } from "@/components/MemberDot";
 import { MemberList } from "@/components/MemberList";
 import { PlanView } from "@/components/PlanView";
@@ -81,6 +83,21 @@ export function TripApp({ initialState }: { initialState: TripState }) {
     await refresh();
   }
 
+  const selectTab = (next: TabId) => {
+    // Native history keeps the back button working without a server round trip.
+    window.history.pushState(null, "", `?tab=${next}`);
+  };
+
+  function showWish(wishId: string) {
+    selectTab("wishes");
+    // Wait for the wishes panel to be shown before scrolling to the card.
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`wish-${wishId}`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      el?.closest("article")?.focus({ preventScroll: true });
+    });
+  }
+
   const planning = trip.phase === "PLANNING";
   const addButton = (
     <button type="button" className="btn btn-primary" onClick={() => openForm()}>
@@ -119,18 +136,18 @@ export function TripApp({ initialState }: { initialState: TripState }) {
       />
     ),
     plan: <PlanView state={state} isHost={!!me?.isHost} onRegenerate={regenerate} />,
-    headsup: <p className="text-muted">Heads-up coming soon.</p>,
+    headsup: (
+      <div className="grid items-start gap-5 sm:grid-cols-[1.4fr_1fr] [&>*]:min-w-0">
+        <HeadsUp state={state} onShowWish={showWish} />
+        <FairnessChecklist state={state} />
+      </div>
+    ),
     group: (
-      <div className="grid items-start gap-5 sm:grid-cols-2">
+      <div className="grid items-start gap-5 sm:grid-cols-2 [&>*]:min-w-0">
         <MemberList members={members} meId={meId} />
         <ShareCode code={trip.code} />
       </div>
     ),
-  };
-
-  const selectTab = (next: TabId) => {
-    // Native history keeps the back button working without a server round trip.
-    window.history.pushState(null, "", `?tab=${next}`);
   };
 
   return (
@@ -153,7 +170,7 @@ export function TripApp({ initialState }: { initialState: TripState }) {
           )}
         </div>
         <nav className="mx-auto mt-2 w-full max-w-4xl px-2">
-          <TabBar active={tab} onSelect={selectTab} />
+          <TabBar active={tab} onSelect={selectTab} badges={{ headsup: state.warnings.length }} />
         </nav>
       </header>
 
