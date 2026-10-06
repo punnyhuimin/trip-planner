@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { TextField } from "@/components/TextField";
 import { api } from "@/lib/api";
+import { DESTINATION_MAX, NAME_MAX, TRIP_NAME_MAX } from "@/lib/limits";
 
 type Errors = Record<string, string[] | undefined>;
 
@@ -50,7 +51,7 @@ export function StartTripForm() {
         value={form.name}
         onChange={set("name")}
         error={errors.name?.[0]}
-        maxLength={60}
+        maxLength={TRIP_NAME_MAX}
         required
       />
       <TextField
@@ -60,7 +61,7 @@ export function StartTripForm() {
         value={form.destination}
         onChange={set("destination")}
         error={errors.destination?.[0]}
-        maxLength={80}
+        maxLength={DESTINATION_MAX}
       />
       <div className="grid grid-cols-2 gap-3">
         <TextField
@@ -91,7 +92,7 @@ export function StartTripForm() {
         value={form.yourName}
         onChange={set("yourName")}
         error={errors.yourName?.[0]}
-        maxLength={30}
+        maxLength={NAME_MAX}
         required
       />
       {formError && (
