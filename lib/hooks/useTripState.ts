@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { nextSync, type SyncState, type SyncStatus, syncStatusOf } from "@/lib/sync";
 import type { StateResponse, TripState } from "@/lib/types";
 
 const POLL_MS = 5_000;
@@ -12,6 +13,8 @@ const POLL_MS = 5_000;
  * - `refresh()` fetches right away; call it after every mutation.
  * - `update()` applies an optimistic local change. The next newer server
  *   version replaces it.
+ * - `sync` says whether polls are getting through (see `lib/sync.ts`).
+ *   Failed polls keep the last good state on screen and keep retrying.
  */
 export function useTripState(code: string, initial: TripState) {
   const [state, setState] = useState(initial);
@@ -19,18 +22,27 @@ export function useTripState(code: string, initial: TripState) {
   const inFlight = useRef<Promise<void> | null>(null);
   const again = useRef(false);
 
+  const [sync, setSync] = useState<SyncState>(() => ({ status: "ok", lastSyncedAt: Date.now() }));
+  const lastOkAt = useRef<number | null>(null);
+
   const fetchOnce = useCallback(async () => {
+    const report = (status: SyncStatus) =>
+      setSync((prev) => nextSync(prev, status, lastOkAt.current ?? prev.lastSyncedAt));
     try {
       const res = await fetch(`/api/trips/${code}/state?since=${version.current}`, {
         cache: "no-store",
       });
-      if (!res.ok) return;
+      const status = syncStatusOf(res.status);
+      if (status !== "ok") return report(status);
       const data = (await res.json()) as StateResponse;
+      lastOkAt.current = Date.now();
+      report("ok");
       if ("unchanged" in data || data.version < version.current) return;
       version.current = data.version;
       setState(data);
     } catch {
-      // Offline or a blip: the next poll tries again.
+      // No response or an unreadable body. Keep polling; a later success clears it.
+      report(syncStatusOf(null));
     }
   }, [code]);
 
@@ -75,5 +87,5 @@ export function useTripState(code: string, initial: TripState) {
     };
   }, [refresh]);
 
-  return { state, refresh, update };
+  return { state, refresh, update, sync };
 }
