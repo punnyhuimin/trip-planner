@@ -13,7 +13,7 @@ async function createTrip(page: Page): Promise<string> {
   await page.getByLabel("Last day").fill("2026-12-02");
   await page.getByLabel("Your name").first().fill("Ana");
   await page.getByRole("button", { name: "Create trip" }).click();
-  await page.waitForURL(/\/t\/[A-Z0-9]{6}$/);
+  await page.waitForURL(/\/t\/[A-Z0-9]{10}$/);
   return page.url().split("/t/")[1];
 }
 
@@ -52,7 +52,7 @@ test("401: offers a rejoin link that leads back into the trip", async ({ page, c
   await expect(page.getByText("You're no longer signed in to this trip.")).toBeVisible();
 
   await rejoin.click();
-  await expect(page.getByRole("heading", { name: "Join Sync trip" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Join a trip" })).toBeVisible();
   // The rejoin link is a full page load: a fill made before hydration gets
   // wiped, so retry until the join actually lands on the trip.
   await expect(async () => {
