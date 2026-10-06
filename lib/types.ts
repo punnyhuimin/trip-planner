@@ -1,12 +1,11 @@
 // Shared types for the API, the client and the planner.
 // Deliberately independent of Prisma: the planner and client components must
-// never import the generated client. The string unions match the Prisma enums.
+// never import the generated client. The string unions match the Prisma enums;
+// tests/enums.test.ts fails typecheck if they drift apart.
 
+// No runtime array for TripPhase: nothing validates or lists phases yet.
 export type TripPhase = "PLANNING" | "LOCKED" | "ON_TRIP" | "JOURNAL";
-export type WishKind = "ACTIVITY" | "CONSTRAINT";
-export type Priority = "MUST" | "LOVE" | "NICE";
 export type TimeOfDay = "EARLY_MORNING" | "MORNING" | "AFTERNOON" | "EVENING" | "NIGHT" | "ANY";
-export type ReactionValue = "IN" | "MAYBE" | "SKIP";
 export type SlotTrack = "GROUP" | "SPLINTER";
 
 /** The 5 schedulable blocks of a day, in chronological order. */
@@ -14,10 +13,15 @@ export const TIME_BLOCKS = ["EARLY_MORNING", "MORNING", "AFTERNOON", "EVENING", 
 export type TimeBlock = (typeof TIME_BLOCKS)[number];
 
 export const TIME_OF_DAY_VALUES = [...TIME_BLOCKS, "ANY"] as const;
+
 export const PRIORITIES = ["MUST", "LOVE", "NICE"] as const;
+export type Priority = (typeof PRIORITIES)[number];
+
 export const WISH_KINDS = ["ACTIVITY", "CONSTRAINT"] as const;
+export type WishKind = (typeof WISH_KINDS)[number];
+
 export const REACTION_VALUES = ["IN", "MAYBE", "SKIP"] as const;
-export const TRIP_PHASES = ["PLANNING", "LOCKED", "ON_TRIP", "JOURNAL"] as const;
+export type ReactionValue = (typeof REACTION_VALUES)[number];
 
 export type TripDTO = {
   code: string;

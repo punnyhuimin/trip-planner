@@ -79,9 +79,16 @@ export function TripApp({ initialState }: { initialState: TripState }) {
       return;
     }
     const left = res.data.unscheduled.length;
-    notify(
-      left ? `Plan updated. ${left} ${left === 1 ? "wish" : "wishes"} didn't fit.` : "Plan updated",
-      "info",
+    // "Didn't fit" is worth reading, so it stays until dismissed.
+    setToast(
+      left
+        ? {
+            id: Date.now(),
+            text: `Plan updated. ${left} ${left === 1 ? "wish" : "wishes"} didn't fit.`,
+            tone: "info",
+            sticky: true,
+          }
+        : { id: Date.now(), text: "Plan updated", tone: "info" },
     );
     await refresh();
   }

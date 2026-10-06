@@ -28,6 +28,14 @@ export function PlanView({ state, isHost, onRegenerate, slotActions }: Props) {
   const canRegenerate = isHost && trip.phase === "PLANNING";
 
   async function regenerate() {
+    // Regenerating reshuffles the shared plan for everyone, so ask first. The first
+    // generate has nothing to lose.
+    if (
+      slots.length > 0 &&
+      !window.confirm("Regenerate the plan? Unpinned activities may move for everyone.")
+    ) {
+      return;
+    }
     setPending(true);
     await onRegenerate();
     setPending(false);

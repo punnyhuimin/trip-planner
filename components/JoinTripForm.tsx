@@ -5,6 +5,7 @@ import { type FormEvent, useId, useState } from "react";
 import { TextField } from "@/components/TextField";
 import { api } from "@/lib/api";
 import { JOIN_CODE_LENGTH } from "@/lib/codes-shared";
+import { NAME_MAX } from "@/lib/limits";
 
 type Props = {
   /** Set when the code is already known (the trip page). The code field is then fixed. */
@@ -93,7 +94,7 @@ export function JoinTripForm({ code: fixedCode, tripName }: Props) {
           value={yourName}
           onChange={(e) => setYourName(e.target.value)}
           error={errors.yourName?.[0]}
-          maxLength={30}
+          maxLength={NAME_MAX}
           required
         />
         {formError && (
