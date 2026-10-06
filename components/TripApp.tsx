@@ -1,20 +1,32 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { type ReactNode, useCallback, useState } from "react";
 import { MemberDot } from "@/components/MemberDot";
 import { MemberList } from "@/components/MemberList";
 import { ShareCode } from "@/components/ShareCode";
 import { TABS, TabBar, type TabId } from "@/components/TabBar";
+import { Toast, type ToastMessage } from "@/components/Toast";
+import { WishBoard } from "@/components/WishBoard";
+import { api } from "@/lib/api";
 import { formatDayLabel } from "@/lib/dates";
 import { useTripState } from "@/lib/hooks/useTripState";
-import type { TripState } from "@/lib/types";
+import { withReaction } from "@/lib/optimistic";
+import type { ReactionValue, TripState } from "@/lib/types";
 
 function isTab(value: string | null): value is TabId {
   return TABS.some((t) => t.id === value);
 }
 
 export function TripApp({ initialState }: { initialState: TripState }) {
-  const { state } = useTripState(initialState.trip.code, initialState);
+  const { state, refresh, update } = useTripState(initialState.trip.code, initialState);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const notify = useCallback(
+    (text: string, tone: ToastMessage["tone"] = "error") =>
+      setToast({ id: Date.now(), text, tone }),
+    [],
+  );
+  const dismissToast = useCallback(() => setToast(null), []);
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const tab: TabId = isTab(tabParam) ? tabParam : "wishes";
@@ -22,8 +34,22 @@ export function TripApp({ initialState }: { initialState: TripState }) {
   const { trip, members, meId } = state;
   const me = members.find((m) => m.id === meId);
 
-  const panels: Record<TabId, React.ReactNode> = {
-    wishes: <p className="text-muted">Wishes coming soon.</p>,
+  async function react(wishId: string, value: ReactionValue | null) {
+    const previous =
+      state.wishes.find((w) => w.id === wishId)?.reactions.find((r) => r.memberId === meId)
+        ?.value ?? null;
+    update(withReaction(wishId, meId, value));
+    const res = await api(`/api/trips/${trip.code}/wishes/${wishId}/reaction`, "PUT", { value });
+    if (!res.ok) {
+      update(withReaction(wishId, meId, previous));
+      notify(`Couldn't save your reaction. ${res.error}`);
+      return;
+    }
+    void refresh();
+  }
+
+  const panels: Record<TabId, ReactNode> = {
+    wishes: <WishBoard state={state} onReact={react} />,
     plan: <p className="text-muted">Plan coming soon.</p>,
     headsup: <p className="text-muted">Heads-up coming soon.</p>,
     group: (
@@ -76,6 +102,7 @@ export function TripApp({ initialState }: { initialState: TripState }) {
           </section>
         ))}
       </main>
+      <Toast toast={toast} onDismiss={dismissToast} />
     </div>
   );
 }
