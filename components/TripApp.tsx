@@ -2,6 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 import { MemberDot } from "@/components/MemberDot";
+import { MemberList } from "@/components/MemberList";
+import { ShareCode } from "@/components/ShareCode";
 import { TABS, TabBar, type TabId } from "@/components/TabBar";
 import { formatDayLabel } from "@/lib/dates";
 import { useTripState } from "@/lib/hooks/useTripState";
@@ -19,6 +21,18 @@ export function TripApp({ initialState }: { initialState: TripState }) {
 
   const { trip, members, meId } = state;
   const me = members.find((m) => m.id === meId);
+
+  const panels: Record<TabId, React.ReactNode> = {
+    wishes: <p className="text-muted">Wishes coming soon.</p>,
+    plan: <p className="text-muted">Plan coming soon.</p>,
+    headsup: <p className="text-muted">Heads-up coming soon.</p>,
+    group: (
+      <div className="grid items-start gap-5 sm:grid-cols-2">
+        <MemberList members={members} meId={meId} />
+        <ShareCode code={trip.code} />
+      </div>
+    ),
+  };
 
   const selectTab = (next: TabId) => {
     // Native history keeps the back button working without a server round trip.
@@ -58,7 +72,7 @@ export function TripApp({ initialState }: { initialState: TripState }) {
             aria-labelledby={`tab-${t.id}`}
             hidden={t.id !== tab}
           >
-            <p className="text-muted">{t.label} coming soon.</p>
+            {panels[t.id]}
           </section>
         ))}
       </main>

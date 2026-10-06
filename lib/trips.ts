@@ -3,12 +3,10 @@ import { MEMBER_COLORS, nextColor } from "@/lib/colors";
 import { parseDateOnly } from "@/lib/dates";
 import { type Db, isUniqueViolation } from "@/lib/db";
 import { HttpError } from "@/lib/http";
+import { MAX_MEMBERS } from "@/lib/limits";
 import type { CreateTripInput } from "@/lib/schemas";
 
 const CODE_ATTEMPTS = 5;
-
-/** Group size from PLAN.md. */
-export const MAX_MEMBERS = 10;
 
 /**
  * Creates a trip and its host. D1 has no transactions, so if the host can't be
