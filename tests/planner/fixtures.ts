@@ -1,5 +1,7 @@
 // Small builders for planner tests.
-import type { PlannerMember, PlannerWish, ReactionValue } from "@/lib/types";
+import { Grid, applyPins } from "@/lib/planner/place";
+import { type RankedWish, rankActivities } from "@/lib/planner/score";
+import type { PlanSlotDraft, PlannerMember, PlannerWish, ReactionValue } from "@/lib/types";
 
 export function members(n: number): PlannerMember[] {
   return Array.from({ length: n }, (_, i) => ({ id: `m${i}`, name: `Member ${i}` }));
@@ -40,4 +42,23 @@ export function wish(
 /** Ids m1..mN-1 except the author, for "everyone else is IN". */
 export function others(all: PlannerMember[], author: string): string[] {
   return all.map((m) => m.id).filter((id) => id !== author);
+}
+
+/** A grid with pins applied, plus the ranked wishes. */
+export function setupGrid(
+  days: number,
+  all: PlannerMember[],
+  wishes: PlannerWish[],
+  pins: PlanSlotDraft[] = [],
+): { grid: Grid; ranked: RankedWish[] } {
+  const ranked = rankActivities(wishes, all.length);
+  const grid = new Grid(days, new Map(ranked.map((r) => [r.wish.id, r])));
+  applyPins(grid, pins, new Set(ranked.map((r) => r.wish.id)));
+  return { grid, ranked };
+}
+
+export function slotsOf(grid: Grid, wishId: string) {
+  return grid.slots
+    .filter((s) => s.wishId === wishId)
+    .map((s) => `${s.dayIndex}:${s.timeOfDay}:${s.track}${s.pinned ? ":pinned" : ""}`);
 }
