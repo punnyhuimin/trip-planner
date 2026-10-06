@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useState } from "react";
 import { MemberDot } from "@/components/MemberDot";
 import { MemberList } from "@/components/MemberList";
+import { PlanView } from "@/components/PlanView";
 import { ShareCode } from "@/components/ShareCode";
 import { TABS, TabBar, type TabId } from "@/components/TabBar";
 import { Toast, type ToastMessage } from "@/components/Toast";
@@ -63,6 +64,23 @@ export function TripApp({ initialState }: { initialState: TripState }) {
     void refresh();
   }
 
+  async function regenerate() {
+    const res = await api<{ unscheduled: { id: string; title: string }[] }>(
+      `/api/trips/${trip.code}/plan/generate`,
+      "POST",
+    );
+    if (!res.ok) {
+      notify(`Couldn't generate the plan. ${res.error}`);
+      return;
+    }
+    const left = res.data.unscheduled.length;
+    notify(
+      left ? `Plan updated. ${left} ${left === 1 ? "wish" : "wishes"} didn't fit.` : "Plan updated",
+      "info",
+    );
+    await refresh();
+  }
+
   const planning = trip.phase === "PLANNING";
   const addButton = (
     <button type="button" className="btn btn-primary" onClick={() => openForm()}>
@@ -100,7 +118,7 @@ export function TripApp({ initialState }: { initialState: TripState }) {
         emptyAction={planning ? addButton : null}
       />
     ),
-    plan: <p className="text-muted">Plan coming soon.</p>,
+    plan: <PlanView state={state} isHost={!!me?.isHost} onRegenerate={regenerate} />,
     headsup: <p className="text-muted">Heads-up coming soon.</p>,
     group: (
       <div className="grid items-start gap-5 sm:grid-cols-2">

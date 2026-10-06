@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { ReactionAvatars } from "@/components/ReactionAvatars";
 import { ReactionButtons } from "@/components/ReactionButtons";
+import { goingMembers } from "@/lib/going";
 import { COST_LABEL, ENERGY_LABEL, PRIORITY_LABEL, TIME_LABEL, formatDuration } from "@/lib/labels";
 import type { MemberDTO, Priority, ReactionValue, WishDTO } from "@/lib/types";
 
@@ -30,7 +31,7 @@ export function WishCard({ wish, author, membersById, meId, onReact, ownerAction
       .filter((r) => r.value === value)
       .map((r) => membersById.get(r.memberId))
       .filter((m): m is MemberDTO => !!m);
-  const going = [author, ...pick("IN")];
+  const going = goingMembers(wish, [...membersById.values()]);
 
   return (
     <article
