@@ -15,3 +15,12 @@ export const MEMBER_COLORS = [
   "#ea580c", // orange
   "#475569", // slate
 ] as const;
+
+/** First palette color nobody in the trip has yet (cycles if all are taken). */
+export function nextColor(usedColors: readonly string[]): string {
+  const used = new Set(usedColors.map((c) => c.toLowerCase()));
+  return (
+    MEMBER_COLORS.find((c) => !used.has(c)) ??
+    MEMBER_COLORS[usedColors.length % MEMBER_COLORS.length]
+  );
+}
