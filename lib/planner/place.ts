@@ -169,3 +169,19 @@ export function placeGroups(grid: Grid, ranked: RankedWish[]): RankedWish[] {
   }
   return unplaced;
 }
+
+/**
+ * Places SPLINTER then SOLO wishes on the SPLINTER track. A splinter can share
+ * a block with the group activity (or other splinters) only when none of its
+ * members are in those. Returns the ones that didn't fit.
+ */
+export function placeSplinters(grid: Grid, ranked: RankedWish[]): RankedWish[] {
+  const unplaced: RankedWish[] = [];
+  for (const cls of ["SPLINTER", "SOLO"] as const) {
+    for (const rw of placementOrder(ranked.filter((r) => r.cls === cls))) {
+      if (grid.isScheduled(rw.wish.id)) continue;
+      if (!grid.place(rw, "SPLINTER")) unplaced.push(rw);
+    }
+  }
+  return unplaced;
+}
