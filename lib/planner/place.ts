@@ -37,7 +37,11 @@ export function trackFor(rw: RankedWish): SlotTrack {
 }
 
 /** Sorts slots by day, block, GROUP before SPLINTER, then wish id. */
-export function compareSlots(a: PlanSlotDraft, b: PlanSlotDraft): number {
+type SortableSlot = Pick<PlanSlotDraft, "wishId" | "dayIndex" | "timeOfDay"> & {
+  track?: SlotTrack;
+};
+
+export function compareSlots(a: SortableSlot, b: SortableSlot): number {
   return (
     a.dayIndex - b.dayIndex ||
     blockIndex(a.timeOfDay) - blockIndex(b.timeOfDay) ||

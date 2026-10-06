@@ -1,6 +1,7 @@
 // Step 5 of the planner: conflict detection. Warnings only; nothing is blocked.
 // Each rule is its own function so it can be tested on its own. PLAN.md §4.
 import { TIME_LABEL } from "@/lib/labels";
+import { compareSlots } from "@/lib/planner/place";
 import { inSet } from "@/lib/planner/score";
 import {
   type PlanSlotDraft,
@@ -32,12 +33,16 @@ type Context = {
 };
 
 function context(input: ConflictInput, slots: PlacedSlot[]): Context {
-  const wishById = new Map(input.wishes.map((w) => [w.id, w]));
+  // Sorted, so output never depends on input order.
+  const wishes = [...input.wishes].sort(
+    (a, b) => a.createdAt.getTime() - b.createdAt.getTime() || (a.id < b.id ? -1 : 1),
+  );
+  const wishById = new Map(wishes.map((w) => [w.id, w]));
   return {
     members: [...input.members].sort((a, b) => (a.id < b.id ? -1 : 1)),
     wishById,
-    going: new Map(input.wishes.map((w) => [w.id, inSet(w)])),
-    slots: slots.filter((s) => wishById.get(s.wishId)?.kind === "ACTIVITY"),
+    going: new Map(wishes.map((w) => [w.id, inSet(w)])),
+    slots: slots.filter((s) => wishById.get(s.wishId)?.kind === "ACTIVITY").sort(compareSlots),
   };
 }
 
@@ -54,7 +59,6 @@ function list(items: string[]): string {
 function constraintMatching(ctx: Context, memberId: string, words: RegExp) {
   return [...ctx.wishById.values()]
     .filter((w) => w.kind === "CONSTRAINT" && w.authorId === memberId)
-    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
     .find((w) => words.test(`${w.title} ${w.notes ?? ""}`));
 }
 
