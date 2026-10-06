@@ -24,6 +24,8 @@ const eslintConfig = defineConfig([
     ".wrangler/**",
     "cloudflare-env.d.ts",
     "lib/generated/**",
+    // Vitest coverage report:
+    "coverage/**",
   ]),
 ]);
 

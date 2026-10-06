@@ -9,6 +9,7 @@ migrations/
 lib/generated/
 playwright-report/
 test-results/
+coverage/
 PLAN.md
 TASKS.md
 .github/
