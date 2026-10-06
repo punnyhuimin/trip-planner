@@ -1,14 +1,26 @@
 import { z } from "zod";
 import { parseDateOnly, tripDays } from "@/lib/dates";
 import {
+  DESTINATION_MAX,
+  DURATION_MAX,
+  DURATION_MIN,
+  DURATION_STEP,
+  LEVEL_MAX,
+  MAX_TAGS,
+  MAX_TRIP_DAYS,
+  NAME_MAX,
+  NOTE_MAX,
+  TAG_MAX,
+  TRIP_NAME_MAX,
+  WISH_TITLE_MAX,
+} from "@/lib/limits";
+import {
   PRIORITIES,
   REACTION_VALUES,
   TIME_BLOCKS,
   TIME_OF_DAY_VALUES,
   WISH_KINDS,
 } from "@/lib/types";
-
-export const MAX_TRIP_DAYS = 30;
 
 const dateOnly = z
   .string()
@@ -18,7 +30,7 @@ const personName = z
   .string()
   .trim()
   .min(1, "Enter your name")
-  .max(30, "Names can be at most 30 characters");
+  .max(NAME_MAX, `Names can be at most ${NAME_MAX} characters`);
 
 export const createTripSchema = z
   .object({
@@ -26,11 +38,11 @@ export const createTripSchema = z
       .string()
       .trim()
       .min(1, "Give the trip a name")
-      .max(60, "Trip names can be at most 60 characters"),
+      .max(TRIP_NAME_MAX, `Trip names can be at most ${TRIP_NAME_MAX} characters`),
     destination: z
       .string()
       .trim()
-      .max(80, "Destinations can be at most 80 characters")
+      .max(DESTINATION_MAX, `Destinations can be at most ${DESTINATION_MAX} characters`)
       .optional()
       .transform((v) => v || undefined),
     startDate: dateOnly,
@@ -60,8 +72,6 @@ export type CreateTripInput = z.infer<typeof createTripSchema>;
 export const joinSchema = z.object({ yourName: personName });
 export type JoinInput = z.infer<typeof joinSchema>;
 
-export const MAX_TAGS = 10;
-
 /** Trimmed, lowercased, comma-free, de-duplicated tags, in first-seen order. */
 export function normalizeTags(tags: string[]): string[] {
   const out: string[] = [];
@@ -72,7 +82,7 @@ export function normalizeTags(tags: string[]): string[] {
   return out;
 }
 
-const level = z.number().int().min(0).max(3);
+const level = z.number().int().min(0).max(LEVEL_MAX);
 
 // No defaults here, so the partial (PATCH) schema leaves unset fields alone.
 const wishFields = {
@@ -80,11 +90,11 @@ const wishFields = {
     .string()
     .trim()
     .min(1, "Give your wish a title")
-    .max(80, "Titles can be at most 80 characters"),
+    .max(WISH_TITLE_MAX, `Titles can be at most ${WISH_TITLE_MAX} characters`),
   notes: z
     .string()
     .trim()
-    .max(500, "Notes can be at most 500 characters")
+    .max(NOTE_MAX, `Notes can be at most ${NOTE_MAX} characters`)
     .nullable()
     .transform((v) => v || null),
   kind: z.enum(WISH_KINDS),
@@ -92,13 +102,13 @@ const wishFields = {
   timeOfDay: z.enum(TIME_OF_DAY_VALUES),
   durationHrs: z
     .number()
-    .min(0.5, "At least half an hour")
-    .max(12, "At most 12 hours")
-    .multipleOf(0.5, "Use half-hour steps"),
+    .min(DURATION_MIN, `At least ${DURATION_MIN} hours`)
+    .max(DURATION_MAX, `At most ${DURATION_MAX} hours`)
+    .multipleOf(DURATION_STEP, `Use steps of ${DURATION_STEP} hours`),
   costLevel: level,
   energy: level,
   tags: z
-    .array(z.string().max(30, "Tags can be at most 30 characters"))
+    .array(z.string().max(TAG_MAX, `Tags can be at most ${TAG_MAX} characters`))
     .transform(normalizeTags)
     .refine((t) => t.length <= MAX_TAGS, `At most ${MAX_TAGS} tags`)
     .transform((t) => t.join(",")),

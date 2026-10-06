@@ -5,6 +5,7 @@ import { ScaleField } from "@/components/ScaleField";
 import { TextField } from "@/components/TextField";
 import { api } from "@/lib/api";
 import { COST_LABEL, ENERGY_LABEL, PRIORITY_LABEL, TIME_LABEL } from "@/lib/labels";
+import { DURATION_MAX, DURATION_MIN, DURATION_STEP, NOTE_MAX, WISH_TITLE_MAX } from "@/lib/limits";
 import {
   PRIORITIES,
   TIME_OF_DAY_VALUES,
@@ -158,7 +159,7 @@ export function WishForm({ code, wish, onClose, onSaved }: Props) {
           value={form.title}
           onChange={(e) => set("title", e.target.value)}
           error={errors.title?.[0]}
-          maxLength={80}
+          maxLength={WISH_TITLE_MAX}
           required
           autoFocus
         />
@@ -213,9 +214,9 @@ export function WishForm({ code, wish, onClose, onSaved }: Props) {
                 name="durationHrs"
                 type="number"
                 inputMode="decimal"
-                min={0.5}
-                max={12}
-                step={0.5}
+                min={DURATION_MIN}
+                max={DURATION_MAX}
+                step={DURATION_STEP}
                 value={form.durationHrs}
                 onChange={(e) => set("durationHrs", e.target.value)}
                 error={errors.durationHrs?.[0]}
@@ -254,7 +255,7 @@ export function WishForm({ code, wish, onClose, onSaved }: Props) {
           <textarea
             id={ids.notes}
             className="input min-h-20"
-            maxLength={500}
+            maxLength={NOTE_MAX}
             value={form.notes}
             onChange={(e) => set("notes", e.target.value)}
             aria-invalid={errors.notes ? true : undefined}
