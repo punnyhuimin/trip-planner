@@ -24,3 +24,22 @@ export async function bumpVersion(db: Db, tripId: string): Promise<number> {
   });
   return trip.version;
 }
+
+/**
+ * True for a unique-constraint violation (Prisma P2002), optionally on a given
+ * field. The D1 adapter reports the field under `meta.driverAdapterError`
+ * rather than the classic `meta.target`, so check both.
+ */
+export function isUniqueViolation(err: unknown, field?: string): boolean {
+  if (typeof err !== "object" || err === null || !("code" in err) || err.code !== "P2002") {
+    return false;
+  }
+  if (!field) return true;
+  const meta = (err as { meta?: Record<string, unknown> }).meta ?? {};
+  const target = meta.target;
+  const adapterFields = (
+    meta.driverAdapterError as { cause?: { constraint?: { fields?: unknown } } } | undefined
+  )?.cause?.constraint?.fields;
+  const fields = [target, adapterFields].flat().filter((f): f is string => typeof f === "string");
+  return fields.length === 0 || fields.includes(field);
+}
