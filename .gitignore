@@ -48,3 +48,9 @@ next-env.d.ts
 /.wrangler/
 .dev.vars*
 /lib/generated/
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

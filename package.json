@@ -21,7 +21,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "rm -rf .wrangler/state && npm run db:migrate:local && npm run db:seed"
+    "db:reset": "rm -rf .wrangler/state && npm run db:migrate:local && npm run db:seed",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.8",
@@ -32,6 +33,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.19.1",
     "@types/react": "^19",
