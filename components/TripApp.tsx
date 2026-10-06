@@ -9,6 +9,7 @@ import { MemberList } from "@/components/MemberList";
 import { MoveSlotPicker } from "@/components/MoveSlotPicker";
 import { PlanView } from "@/components/PlanView";
 import { ShareCode } from "@/components/ShareCode";
+import { SyncBanner } from "@/components/SyncBanner";
 import { TABS, TabBar, type TabId } from "@/components/TabBar";
 import { Toast, type ToastMessage } from "@/components/Toast";
 import { WishBoard } from "@/components/WishBoard";
@@ -24,7 +25,7 @@ function isTab(value: string | null): value is TabId {
 }
 
 export function TripApp({ initialState }: { initialState: TripState }) {
-  const { state, refresh, update } = useTripState(initialState.trip.code, initialState);
+  const { state, refresh, update, sync } = useTripState(initialState.trip.code, initialState);
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const notify = useCallback(
     (text: string, tone: ToastMessage["tone"] = "error") =>
@@ -218,6 +219,7 @@ export function TripApp({ initialState }: { initialState: TripState }) {
         <nav className="mx-auto mt-2 w-full max-w-4xl px-2">
           <TabBar active={tab} onSelect={selectTab} badges={{ headsup: state.warnings.length }} />
         </nav>
+        <SyncBanner code={trip.code} sync={sync} />
       </header>
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-5">
