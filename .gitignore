@@ -42,3 +42,8 @@ next-env.d.ts
 
 # local backups
 *.bak
+
+# cloudflare
+/.open-next/
+/.wrangler/
+.dev.vars*
