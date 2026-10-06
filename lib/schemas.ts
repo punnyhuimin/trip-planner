@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { parseDateOnly, tripDays } from "@/lib/dates";
-import { PRIORITIES, REACTION_VALUES, TIME_OF_DAY_VALUES, WISH_KINDS } from "@/lib/types";
+import {
+  PRIORITIES,
+  REACTION_VALUES,
+  TIME_BLOCKS,
+  TIME_OF_DAY_VALUES,
+  WISH_KINDS,
+} from "@/lib/types";
 
 export const MAX_TRIP_DAYS = 30;
 
@@ -115,3 +121,10 @@ export type UpdateWishInput = z.input<typeof updateWishSchema>;
 
 /** `null` clears your reaction. */
 export const reactionSchema = z.object({ value: z.enum(REACTION_VALUES).nullable() });
+
+/** Move a slot (which pins it), or `{ pinned: false }` to let the generator move it again. */
+export const slotPatchSchema = z.union([
+  z.object({ dayIndex: z.number().int().min(0), timeOfDay: z.enum(TIME_BLOCKS) }).strict(),
+  z.object({ pinned: z.literal(false) }).strict(),
+]);
+export type SlotPatch = z.infer<typeof slotPatchSchema>;

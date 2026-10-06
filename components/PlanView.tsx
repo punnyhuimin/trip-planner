@@ -60,7 +60,7 @@ export function PlanView({ state, isHost, onRegenerate, slotActions }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
           {isHost
-            ? "Regenerating keeps pinned cards where they are."
+            ? "Moving a card pins it. Regenerating keeps pinned cards where they are."
             : "The host can regenerate and adjust the plan."}
         </p>
         {regenerateButton}

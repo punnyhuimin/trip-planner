@@ -14,7 +14,7 @@ export const INTENSE_ENERGY = 3;
 const blockIndex = (b: TimeBlock) => TIME_BLOCKS.indexOf(b);
 
 /** Two adjacent blocks for a long wish starting at `b` (or ending at it, for NIGHT). */
-function pairFor(b: TimeBlock): TimeBlock[] {
+export function pairFor(b: TimeBlock): TimeBlock[] {
   const i = blockIndex(b);
   return i + 1 < TIME_BLOCKS.length ? [b, TIME_BLOCKS[i + 1]] : [TIME_BLOCKS[i - 1], b];
 }

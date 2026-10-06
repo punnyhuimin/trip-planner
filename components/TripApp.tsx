@@ -6,6 +6,7 @@ import { FairnessChecklist } from "@/components/FairnessChecklist";
 import { HeadsUp } from "@/components/HeadsUp";
 import { MemberDot } from "@/components/MemberDot";
 import { MemberList } from "@/components/MemberList";
+import { MoveSlotPicker } from "@/components/MoveSlotPicker";
 import { PlanView } from "@/components/PlanView";
 import { ShareCode } from "@/components/ShareCode";
 import { TABS, TabBar, type TabId } from "@/components/TabBar";
@@ -16,7 +17,7 @@ import { api } from "@/lib/api";
 import { formatDayLabel } from "@/lib/dates";
 import { useTripState } from "@/lib/hooks/useTripState";
 import { withReaction } from "@/lib/optimistic";
-import type { ReactionValue, TripState, WishDTO } from "@/lib/types";
+import type { ReactionValue, SlotDTO, TripState, WishDTO } from "@/lib/types";
 
 function isTab(value: string | null): value is TabId {
   return TABS.some((t) => t.id === value);
@@ -34,6 +35,7 @@ export function TripApp({ initialState }: { initialState: TripState }) {
   // The open form is keyed by `formKey`, never by state version, so polls can't reset it.
   const [form, setForm] = useState<{ key: number; wish?: WishDTO } | null>(null);
   const openForm = (wish?: WishDTO) => setForm({ key: Date.now(), wish });
+  const [moving, setMoving] = useState<{ slot: SlotDTO; wish: WishDTO } | null>(null);
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const tab: TabId = isTab(tabParam) ? tabParam : "wishes";
@@ -98,7 +100,44 @@ export function TripApp({ initialState }: { initialState: TripState }) {
     });
   }
 
+  async function unpin(slot: SlotDTO) {
+    const res = await api(`/api/trips/${trip.code}/plan/slots/${slot.id}`, "PATCH", {
+      pinned: false,
+    });
+    if (!res.ok) {
+      notify(`Couldn't unpin. ${res.error}`);
+      return;
+    }
+    notify("Unpinned. The next regenerate may move it.", "info");
+    void refresh();
+  }
+
   const planning = trip.phase === "PLANNING";
+  const slotActions =
+    me?.isHost && planning
+      ? (slot: SlotDTO, wish: WishDTO) => (
+          <span className="flex shrink-0 gap-1">
+            {slot.pinned && (
+              <button
+                type="button"
+                className="btn btn-ghost min-h-8 px-2.5 py-1 text-xs"
+                onClick={() => unpin(slot)}
+                aria-label={`Unpin ${wish.title}`}
+              >
+                Unpin
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-ghost min-h-8 px-2.5 py-1 text-xs"
+              onClick={() => setMoving({ slot, wish })}
+              aria-label={`Move ${wish.title}`}
+            >
+              Move…
+            </button>
+          </span>
+        )
+      : undefined;
   const addButton = (
     <button type="button" className="btn btn-primary" onClick={() => openForm()}>
       <span aria-hidden>+</span> Add a wish
@@ -135,7 +174,14 @@ export function TripApp({ initialState }: { initialState: TripState }) {
         emptyAction={planning ? addButton : null}
       />
     ),
-    plan: <PlanView state={state} isHost={!!me?.isHost} onRegenerate={regenerate} />,
+    plan: (
+      <PlanView
+        state={state}
+        isHost={!!me?.isHost}
+        onRegenerate={regenerate}
+        slotActions={slotActions}
+      />
+    ),
     headsup: (
       <div className="grid items-start gap-5 sm:grid-cols-[1.4fr_1fr] [&>*]:min-w-0">
         <HeadsUp state={state} onShowWish={showWish} />
@@ -201,6 +247,21 @@ export function TripApp({ initialState }: { initialState: TripState }) {
           onSaved={(message) => {
             setForm(null);
             notify(message, "info");
+            void refresh();
+          }}
+        />
+      )}
+      {moving && (
+        <MoveSlotPicker
+          code={trip.code}
+          slot={moving.slot}
+          wish={moving.wish}
+          days={trip.days}
+          startDate={trip.startDate}
+          onClose={() => setMoving(null)}
+          onMoved={() => {
+            setMoving(null);
+            notify(`Moved and pinned ${moving.wish.title}`, "info");
             void refresh();
           }}
         />
