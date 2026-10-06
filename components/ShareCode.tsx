@@ -34,7 +34,10 @@ export function ShareCode({ code }: { code: string }) {
       <div className="perforation mx-5" aria-hidden />
       <div className="flex flex-col items-center gap-3 px-6 pt-4 pb-5">
         <p
-          className="font-mono text-4xl font-semibold tracking-[0.3em] text-ink"
+          className={`font-mono font-semibold text-ink ${
+            // 10-character codes need a smaller size to fit a 375px screen.
+            code.length > 6 ? "text-3xl tracking-[0.15em]" : "text-4xl tracking-[0.3em]"
+          }`}
           aria-label={`Trip code ${code.split("").join(" ")}`}
         >
           {code}

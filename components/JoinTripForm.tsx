@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useId, useState } from "react";
 import { TextField } from "@/components/TextField";
 import { api } from "@/lib/api";
-import { JOIN_CODE_LENGTH } from "@/lib/codes-shared";
+import { JOIN_CODE_LENGTH, LEGACY_JOIN_CODE_LENGTH, isJoinCodeFormat } from "@/lib/codes-shared";
 
 type Props = {
   /**
@@ -26,8 +26,12 @@ export function JoinTripForm({ code: fixedCode }: Props) {
   async function submit(e: FormEvent) {
     e.preventDefault();
     const cleanCode = code.trim().toUpperCase();
-    if (cleanCode.length !== JOIN_CODE_LENGTH) {
-      setErrors({ code: [`Codes are ${JOIN_CODE_LENGTH} characters`] });
+    if (!isJoinCodeFormat(cleanCode)) {
+      setErrors({
+        code: [
+          `Codes are ${JOIN_CODE_LENGTH} characters (${LEGACY_JOIN_CODE_LENGTH} for older trips)`,
+        ],
+      });
       return;
     }
     setPending(true);
@@ -68,7 +72,7 @@ export function JoinTripForm({ code: fixedCode }: Props) {
             id={codeId}
             name="code"
             className="input text-center font-mono text-2xl font-semibold tracking-[0.35em] uppercase read-only:bg-paper"
-            placeholder="K7QX2M"
+            placeholder="K7QX2MPW4R"
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}

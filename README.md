@@ -22,7 +22,7 @@ Planning a trip with friends usually goes like this: one person makes a spreadsh
 
 TripMaker fixes that:
 
-- 🎟️ **Join with a code.** Share a 6-character code like `K7QX2M`. Anyone with it picks a name and they're in, with no sign-up and no password.
+- 🎟️ **Join with a code.** Share a 10-character code like `K7QX2MPW4R`. Anyone with it picks a name and they're in, with no sign-up and no password.
 - 💭 **Everyone adds wishes.** Activities ("ramen crawl", "sunrise hike") and constraints ("no early mornings", "budget under $50/day"), each with a priority, time of day, cost and energy level.
 - 👍 **React IN / MAYBE / SKIP.** The board shows what the whole group wants and what only one or two people want.
 - 🗓️ **Get a plan.** The host generates a day-by-day schedule. Popular wishes become **group** activities, and smaller ones become **splinter** outings for the people who want them.

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { JoinTripForm } from "@/components/JoinTripForm";
 import { TripApp } from "@/components/TripApp";
 import { getCurrentMember, normalizeCode } from "@/lib/auth";
+import { isJoinCodeFormat } from "@/lib/codes-shared";
 import { getDb } from "@/lib/db";
 import { buildTripState } from "@/lib/state";
 
@@ -23,6 +24,8 @@ export async function generateMetadata(props: PageProps<"/t/[code]">): Promise<M
 export default async function TripPage(props: PageProps<"/t/[code]">) {
   const { code } = await props.params;
   const canonical = normalizeCode(code);
+  // Rejecting malformed codes reveals nothing about which trips exist.
+  if (!isJoinCodeFormat(canonical)) notFound();
   if (code !== canonical) redirect(`/t/${canonical}`);
 
   const current = await getCurrentMember(canonical);
