@@ -8,11 +8,12 @@ import { ShareCode } from "@/components/ShareCode";
 import { TABS, TabBar, type TabId } from "@/components/TabBar";
 import { Toast, type ToastMessage } from "@/components/Toast";
 import { WishBoard } from "@/components/WishBoard";
+import { WishForm } from "@/components/WishForm";
 import { api } from "@/lib/api";
 import { formatDayLabel } from "@/lib/dates";
 import { useTripState } from "@/lib/hooks/useTripState";
 import { withReaction } from "@/lib/optimistic";
-import type { ReactionValue, TripState } from "@/lib/types";
+import type { ReactionValue, TripState, WishDTO } from "@/lib/types";
 
 function isTab(value: string | null): value is TabId {
   return TABS.some((t) => t.id === value);
@@ -27,6 +28,9 @@ export function TripApp({ initialState }: { initialState: TripState }) {
     [],
   );
   const dismissToast = useCallback(() => setToast(null), []);
+  // The open form is keyed by `formKey`, never by state version, so polls can't reset it.
+  const [form, setForm] = useState<{ key: number; wish?: WishDTO } | null>(null);
+  const openForm = (wish?: WishDTO) => setForm({ key: Date.now(), wish });
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const tab: TabId = isTab(tabParam) ? tabParam : "wishes";
@@ -48,8 +52,54 @@ export function TripApp({ initialState }: { initialState: TripState }) {
     void refresh();
   }
 
+  async function deleteWish(wish: WishDTO) {
+    if (!window.confirm(`Delete "${wish.title}"? Reactions to it will be lost too.`)) return;
+    const res = await api(`/api/trips/${trip.code}/wishes/${wish.id}`, "DELETE");
+    if (!res.ok) {
+      notify(`Couldn't delete the wish. ${res.error}`);
+      return;
+    }
+    notify("Wish deleted", "info");
+    void refresh();
+  }
+
+  const planning = trip.phase === "PLANNING";
+  const addButton = (
+    <button type="button" className="btn btn-primary" onClick={() => openForm()}>
+      <span aria-hidden>+</span> Add a wish
+    </button>
+  );
+  const ownerActions = (wish: WishDTO) =>
+    planning ? (
+      <span className="flex gap-1">
+        <button
+          type="button"
+          className="btn btn-ghost min-h-8 px-2.5 py-1 text-xs"
+          onClick={() => openForm(wish)}
+          aria-label={`Edit ${wish.title}`}
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          className="btn btn-danger min-h-8 px-2.5 py-1 text-xs"
+          onClick={() => deleteWish(wish)}
+          aria-label={`Delete ${wish.title}`}
+        >
+          Delete
+        </button>
+      </span>
+    ) : null;
+
   const panels: Record<TabId, ReactNode> = {
-    wishes: <WishBoard state={state} onReact={react} />,
+    wishes: (
+      <WishBoard
+        state={state}
+        onReact={react}
+        ownerActions={ownerActions}
+        emptyAction={planning ? addButton : null}
+      />
+    ),
     plan: <p className="text-muted">Plan coming soon.</p>,
     headsup: <p className="text-muted">Heads-up coming soon.</p>,
     group: (
@@ -102,6 +152,24 @@ export function TripApp({ initialState }: { initialState: TripState }) {
           </section>
         ))}
       </main>
+      {tab === "wishes" && planning && state.wishes.length > 0 && (
+        <div className="pointer-events-none sticky bottom-0 z-10 flex justify-end px-4 pb-4 sm:mx-auto sm:w-full sm:max-w-4xl">
+          <div className="pointer-events-auto shadow-lg">{addButton}</div>
+        </div>
+      )}
+      {form && (
+        <WishForm
+          key={form.key}
+          code={trip.code}
+          wish={form.wish}
+          onClose={() => setForm(null)}
+          onSaved={(message) => {
+            setForm(null);
+            notify(message, "info");
+            void refresh();
+          }}
+        />
+      )}
       <Toast toast={toast} onDismiss={dismissToast} />
     </div>
   );
