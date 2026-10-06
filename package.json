@@ -19,7 +19,9 @@
     "db:migrate:remote": "wrangler d1 migrations apply tripmaker --remote",
     "db:query": "wrangler d1 execute tripmaker --local --command",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "rm -rf .wrangler/state && npm run db:migrate:local && npm run db:seed"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.8",
@@ -40,6 +42,7 @@
     "prettier": "^3.9.9",
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.3",
     "wrangler": "^4.147.0"
@@ -51,7 +54,8 @@
     "unrs-resolver@1.12.2": true,
     "workerd@1.20261001.1": true,
     "@prisma/engines@7.10.0": true,
-    "fsevents": false
+    "fsevents": false,
+    "esbuild@0.28.2": true
   },
   "engines": {
     "node": ">=24"

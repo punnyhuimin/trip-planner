@@ -8,6 +8,14 @@ generator client {
   runtime  = "cloudflare"
 }
 
+// Same client for plain Node.js tooling (the seed script), which can't load
+// the cloudflare runtime's `.wasm?module` import.
+generator nodeClient {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma-node"
+  runtime  = "nodejs"
+}
+
 datasource db {
   provider = "sqlite"
 }
