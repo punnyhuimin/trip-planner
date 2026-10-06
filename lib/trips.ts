@@ -1,10 +1,14 @@
 import { generateJoinCode, generateToken } from "@/lib/codes";
-import { MEMBER_COLORS } from "@/lib/colors";
+import { MEMBER_COLORS, nextColor } from "@/lib/colors";
 import { parseDateOnly } from "@/lib/dates";
 import { type Db, isUniqueViolation } from "@/lib/db";
+import { HttpError } from "@/lib/http";
 import type { CreateTripInput } from "@/lib/schemas";
 
 const CODE_ATTEMPTS = 5;
+
+/** Group size from PLAN.md. */
+export const MAX_MEMBERS = 10;
 
 /**
  * Creates a trip and its host. D1 has no transactions, so if the host can't be
@@ -43,4 +47,34 @@ export async function createTripWithHost(
     throw err;
   }
   return { code: trip.code, token };
+}
+
+/** Adds a new member with the next free color. Names are unique per trip, ignoring case. */
+export async function addMember(
+  db: Db,
+  tripId: string,
+  name: string,
+): Promise<{ id: string; token: string }> {
+  const existing = await db.member.findMany({
+    where: { tripId },
+    select: { name: true, color: true },
+  });
+  if (existing.length >= MAX_MEMBERS) {
+    throw new HttpError(409, `This trip is full (${MAX_MEMBERS} people max)`);
+  }
+  const taken = () => new HttpError(409, "That name is taken in this trip");
+  if (existing.some((m) => m.name.toLowerCase() === name.toLowerCase())) throw taken();
+
+  const token = generateToken();
+  try {
+    const member = await db.member.create({
+      data: { tripId, name, token, color: nextColor(existing.map((m) => m.color)) },
+      select: { id: true },
+    });
+    return { id: member.id, token };
+  } catch (err) {
+    // Someone with the same name joined between the check and the insert.
+    if (isUniqueViolation(err)) throw taken();
+    throw err;
+  }
 }
