@@ -2,14 +2,20 @@
 
 import { useEffect } from "react";
 
-export type ToastMessage = { id: number; text: string; tone: "error" | "info" };
+export type ToastMessage = {
+  id: number;
+  text: string;
+  tone: "error" | "info";
+  /** Stays until the user dismisses it (or another message replaces it). */
+  sticky?: boolean;
+};
 
 type Props = { toast: ToastMessage | null; onDismiss: () => void };
 
 /** One message at a time, bottom of the screen, announced to screen readers. */
 export function Toast({ toast, onDismiss }: Props) {
   useEffect(() => {
-    if (!toast) return;
+    if (!toast || toast.sticky) return;
     const t = setTimeout(onDismiss, toast.tone === "error" ? 6000 : 3000);
     return () => clearTimeout(t);
   }, [toast, onDismiss]);

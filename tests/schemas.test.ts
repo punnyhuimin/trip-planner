@@ -1,4 +1,19 @@
 import { describe, expect, it } from "vitest";
+import { dayDate } from "@/lib/dates";
+import {
+  DESTINATION_MAX,
+  DURATION_MAX,
+  DURATION_MIN,
+  DURATION_STEP,
+  LEVEL_MAX,
+  MAX_TAGS,
+  MAX_TRIP_DAYS,
+  NAME_MAX,
+  NOTE_MAX,
+  TAG_MAX,
+  TRIP_NAME_MAX,
+  WISH_TITLE_MAX,
+} from "@/lib/limits";
 import {
   createTripSchema,
   createWishSchema,
@@ -43,9 +58,11 @@ describe("createTripSchema", () => {
     expect(result.error?.issues[0].path).toEqual(["endDate"]);
   });
 
-  it("allows 30 days but not 31", () => {
-    expect(createTripSchema.safeParse({ ...valid, endDate: "2026-12-01" }).success).toBe(true);
-    expect(createTripSchema.safeParse({ ...valid, endDate: "2026-12-02" }).success).toBe(false);
+  it(`allows ${MAX_TRIP_DAYS} days but not ${MAX_TRIP_DAYS + 1}`, () => {
+    const lastDay = dayDate(valid.startDate, MAX_TRIP_DAYS - 1);
+    const dayAfter = dayDate(valid.startDate, MAX_TRIP_DAYS);
+    expect(createTripSchema.safeParse({ ...valid, endDate: lastDay }).success).toBe(true);
+    expect(createTripSchema.safeParse({ ...valid, endDate: dayAfter }).success).toBe(false);
   });
 
   it("rejects impossible dates", () => {
@@ -54,10 +71,15 @@ describe("createTripSchema", () => {
   });
 
   it("enforces length limits", () => {
-    expect(createTripSchema.safeParse({ ...valid, name: "x".repeat(60) }).success).toBe(true);
-    expect(createTripSchema.safeParse({ ...valid, name: "x".repeat(61) }).success).toBe(false);
-    expect(createTripSchema.safeParse({ ...valid, name: "   " }).success).toBe(false);
-    expect(createTripSchema.safeParse({ ...valid, yourName: "x".repeat(31) }).success).toBe(false);
+    const ok = (input: Partial<typeof valid>) =>
+      createTripSchema.safeParse({ ...valid, ...input }).success;
+    expect(ok({ name: "x".repeat(TRIP_NAME_MAX) })).toBe(true);
+    expect(ok({ name: "x".repeat(TRIP_NAME_MAX + 1) })).toBe(false);
+    expect(ok({ name: "   " })).toBe(false);
+    expect(ok({ destination: "x".repeat(DESTINATION_MAX) })).toBe(true);
+    expect(ok({ destination: "x".repeat(DESTINATION_MAX + 1) })).toBe(false);
+    expect(ok({ yourName: "x".repeat(NAME_MAX) })).toBe(true);
+    expect(ok({ yourName: "x".repeat(NAME_MAX + 1) })).toBe(false);
   });
 });
 
@@ -68,8 +90,8 @@ describe("joinSchema", () => {
 
   it("rejects empty and over-long names", () => {
     expect(joinSchema.safeParse({ yourName: "  " }).success).toBe(false);
-    expect(joinSchema.safeParse({ yourName: "x".repeat(30) }).success).toBe(true);
-    expect(joinSchema.safeParse({ yourName: "x".repeat(31) }).success).toBe(false);
+    expect(joinSchema.safeParse({ yourName: "x".repeat(NAME_MAX) }).success).toBe(true);
+    expect(joinSchema.safeParse({ yourName: "x".repeat(NAME_MAX + 1) }).success).toBe(false);
   });
 });
 
@@ -101,12 +123,22 @@ describe("createWishSchema", () => {
 
   it("enforces ranges", () => {
     const base = { title: "x", kind: "ACTIVITY" };
-    expect(createWishSchema.safeParse({ ...base, title: "x".repeat(81) }).success).toBe(false);
-    expect(createWishSchema.safeParse({ ...base, notes: "x".repeat(501) }).success).toBe(false);
-    expect(createWishSchema.safeParse({ ...base, durationHrs: 0.25 }).success).toBe(false);
-    expect(createWishSchema.safeParse({ ...base, durationHrs: 12.5 }).success).toBe(false);
-    expect(createWishSchema.safeParse({ ...base, durationHrs: 4.5 }).success).toBe(true);
-    expect(createWishSchema.safeParse({ ...base, costLevel: 4 }).success).toBe(false);
+    const ok = (input: Record<string, unknown>) =>
+      createWishSchema.safeParse({ ...base, ...input }).success;
+    expect(ok({ title: "x".repeat(WISH_TITLE_MAX) })).toBe(true);
+    expect(ok({ title: "x".repeat(WISH_TITLE_MAX + 1) })).toBe(false);
+    expect(ok({ notes: "x".repeat(NOTE_MAX) })).toBe(true);
+    expect(ok({ notes: "x".repeat(NOTE_MAX + 1) })).toBe(false);
+    expect(ok({ durationHrs: DURATION_MIN })).toBe(true);
+    expect(ok({ durationHrs: DURATION_MIN - DURATION_STEP / 2 })).toBe(false);
+    expect(ok({ durationHrs: DURATION_MAX })).toBe(true);
+    expect(ok({ durationHrs: DURATION_MAX + DURATION_STEP })).toBe(false);
+    expect(ok({ durationHrs: DURATION_MIN + DURATION_STEP * 8 })).toBe(true);
+    expect(ok({ durationHrs: DURATION_MIN + DURATION_STEP / 2 })).toBe(false);
+    expect(ok({ costLevel: LEVEL_MAX })).toBe(true);
+    expect(ok({ costLevel: LEVEL_MAX + 1 })).toBe(false);
+    expect(ok({ tags: ["x".repeat(TAG_MAX)] })).toBe(true);
+    expect(ok({ tags: ["x".repeat(TAG_MAX + 1)] })).toBe(false);
     expect(createWishSchema.safeParse({ ...base, energy: -1 }).success).toBe(false);
     expect(createWishSchema.safeParse({ ...base, energy: 1.5 }).success).toBe(false);
     expect(createWishSchema.safeParse({ ...base, timeOfDay: "LUNCH" }).success).toBe(false);
@@ -114,8 +146,11 @@ describe("createWishSchema", () => {
   });
 
   it("caps the number of tags", () => {
-    const tags = Array.from({ length: 11 }, (_, i) => `t${i}`);
-    expect(createWishSchema.safeParse({ title: "x", kind: "ACTIVITY", tags }).success).toBe(false);
+    const tags = (n: number) => Array.from({ length: n }, (_, i) => `t${i}`);
+    const parse = (n: number) =>
+      createWishSchema.safeParse({ title: "x", kind: "ACTIVITY", tags: tags(n) }).success;
+    expect(parse(MAX_TAGS)).toBe(true);
+    expect(parse(MAX_TAGS + 1)).toBe(false);
   });
 });
 

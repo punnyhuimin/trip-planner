@@ -71,6 +71,26 @@ test("two people plan a trip together", async ({ browser }) => {
   // B isn't the host, so B can't regenerate.
   await expect(b.getByRole("button", { name: /generate plan/i })).toHaveCount(0);
 
+  // 7. Regenerating an existing plan asks first; cancelling sends nothing.
+  let generateCalls = 0;
+  a.on("request", (req) => {
+    if (req.method() === "POST" && req.url().endsWith("/plan/generate")) generateCalls++;
+  });
+  let confirmText = "";
+  a.once("dialog", (d) => {
+    confirmText = d.message();
+    void d.dismiss();
+  });
+  await a.getByRole("button", { name: "Regenerate plan" }).click();
+  await expect.poll(() => confirmText).toContain("Unpinned activities may move for everyone");
+  await expect(a.getByRole("button", { name: "Regenerate plan" })).toBeEnabled();
+  expect(generateCalls).toBe(0);
+
+  a.once("dialog", (d) => void d.accept());
+  await a.getByRole("button", { name: "Regenerate plan" }).click();
+  await expect.poll(() => generateCalls).toBe(1);
+  await expect(a.getByRole("status")).toContainText("Plan updated");
+
   await contextA.close();
   await contextB.close();
 });
