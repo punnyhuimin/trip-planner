@@ -95,3 +95,44 @@ export type ApiError = {
   error: string;
   details?: Record<string, string[] | undefined>;
 };
+
+// ---- Planner (lib/planner) ----------------------------------------------
+// Planner-specific shapes, so the planner never touches Prisma.
+
+export type PlannerMember = { id: string; name: string };
+
+export type PlannerWish = {
+  id: string;
+  authorId: string;
+  kind: WishKind;
+  priority: Priority;
+  timeOfDay: TimeOfDay;
+  durationHrs: number;
+  costLevel: number;
+  energy: number;
+  title: string;
+  notes: string | null;
+  createdAt: Date;
+  reactions: { memberId: string; value: ReactionValue }[];
+};
+
+export type PlanSlotDraft = {
+  wishId: string;
+  dayIndex: number;
+  timeOfDay: TimeBlock;
+  track: SlotTrack;
+  pinned: boolean;
+};
+
+export type PlannerInput = {
+  days: number;
+  members: PlannerMember[];
+  wishes: PlannerWish[]; // with reactions; constraints included
+  pinnedSlots: PlanSlotDraft[];
+};
+
+export type PlanResult = {
+  slots: PlanSlotDraft[];
+  unscheduled: PlannerWish[];
+  warnings: Warning[];
+};
