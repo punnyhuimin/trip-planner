@@ -17,6 +17,29 @@
       "migrations_dir": "migrations",
     },
   ],
+  // Per-IP rate limits (see lib/rate-limit.ts). Workers Rate Limiting only
+  // allows a 10 s or 60 s period, and counts are per Cloudflare location, so
+  // these are approximate. `namespace_id` must be unique within the account.
+  "ratelimits": [
+    {
+      // Joining is how a guessed code gets used: keep it strict.
+      "name": "JOIN_LIMITER",
+      "namespace_id": "2001",
+      "simple": { "limit": 10, "period": 60 },
+    },
+    {
+      // Each open trip tab polls every 5 s (12/min), so leave room for a group
+      // sharing one IP (hotel wifi, carrier NAT) with several tabs each.
+      "name": "STATE_LIMITER",
+      "namespace_id": "2002",
+      "simple": { "limit": 300, "period": 60 },
+    },
+    {
+      "name": "CREATE_TRIP_LIMITER",
+      "namespace_id": "2003",
+      "simple": { "limit": 5, "period": 60 },
+    },
+  ],
   "observability": {
     "enabled": true,
   },

@@ -25,7 +25,7 @@ test("two people plan a trip together", async ({ browser }) => {
   await a.getByLabel("Last day").fill("2026-12-03");
   await a.getByLabel("Your name").first().fill("Ana");
   await a.getByRole("button", { name: "Create trip" }).click();
-  await a.waitForURL(/\/t\/[A-Z0-9]{6}$/);
+  await a.waitForURL(/\/t\/[A-Z0-9]{10}$/);
   const code = a.url().split("/t/")[1];
 
   // 2. B joins with the code from the landing page.

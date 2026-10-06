@@ -4,16 +4,18 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useId, useState } from "react";
 import { TextField } from "@/components/TextField";
 import { api } from "@/lib/api";
-import { JOIN_CODE_LENGTH } from "@/lib/codes-shared";
+import { JOIN_CODE_LENGTH, LEGACY_JOIN_CODE_LENGTH, isJoinCodeFormat } from "@/lib/codes-shared";
 import { NAME_MAX } from "@/lib/limits";
 
 type Props = {
-  /** Set when the code is already known (the trip page). The code field is then fixed. */
+  /**
+   * Set when the code is already known (the trip page). The code field is then
+   * fixed. The trip's name is deliberately not shown until you've joined.
+   */
   code?: string;
-  tripName?: string;
 };
 
-export function JoinTripForm({ code: fixedCode, tripName }: Props) {
+export function JoinTripForm({ code: fixedCode }: Props) {
   const router = useRouter();
   const codeId = useId();
   const [code, setCode] = useState(fixedCode ?? "");
@@ -25,8 +27,12 @@ export function JoinTripForm({ code: fixedCode, tripName }: Props) {
   async function submit(e: FormEvent) {
     e.preventDefault();
     const cleanCode = code.trim().toUpperCase();
-    if (cleanCode.length !== JOIN_CODE_LENGTH) {
-      setErrors({ code: [`Codes are ${JOIN_CODE_LENGTH} characters`] });
+    if (!isJoinCodeFormat(cleanCode)) {
+      setErrors({
+        code: [
+          `Codes are ${JOIN_CODE_LENGTH} characters (${LEGACY_JOIN_CODE_LENGTH} for older trips)`,
+        ],
+      });
       return;
     }
     setPending(true);
@@ -50,9 +56,7 @@ export function JoinTripForm({ code: fixedCode, tripName }: Props) {
   return (
     <form onSubmit={submit} noValidate className="ticket flex flex-col">
       <div className="px-6 pt-5 pb-4">
-        <h2 className="font-display text-2xl font-semibold">
-          {tripName ? `Join ${tripName}` : "Join a trip"}
-        </h2>
+        <h2 className="font-display text-2xl font-semibold">Join a trip</h2>
         <p className="mt-1 text-sm text-muted">
           {fixedCode
             ? "Pick the name the group will see."
@@ -69,7 +73,7 @@ export function JoinTripForm({ code: fixedCode, tripName }: Props) {
             id={codeId}
             name="code"
             className="input text-center font-mono text-2xl font-semibold tracking-[0.35em] uppercase read-only:bg-paper"
-            placeholder="K7QX2M"
+            placeholder="K7QX2MPW4R"
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}

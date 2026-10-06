@@ -41,7 +41,7 @@ A collaborative trip-planning web app where a group (up to ~10 people) adds pers
 ```prisma
 model Trip {
   id          String   @id @default(cuid())
-  code        String   @unique        // 6-char join code, e.g. "K7QX2M"
+  code        String   @unique        // 10-char join code, e.g. "K7QX2MPW4R" (older trips: 6)
   name        String
   destination String?
   startDate   DateTime
