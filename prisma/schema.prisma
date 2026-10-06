@@ -1,0 +1,131 @@
+// TripMaker data model (PLAN.md §3).
+// Runs on Cloudflare D1 (SQLite) today; avoid SQLite-only features so the
+// same schema works on Postgres later.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+  runtime  = "cloudflare"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Trip {
+  id          String     @id @default(cuid())
+  code        String     @unique // 6-char join code, e.g. "K7QX2M"
+  name        String
+  destination String?
+  startDate   DateTime
+  endDate     DateTime
+  phase       TripPhase  @default(PLANNING)
+  version     Int        @default(0) // bumped on every write; lets polls skip unchanged state
+  createdAt   DateTime   @default(now())
+  members     Member[]
+  wishes      Wish[]
+  slots       PlanSlot[]
+}
+
+enum TripPhase {
+  PLANNING
+  LOCKED
+  ON_TRIP
+  JOURNAL
+}
+
+model Member {
+  id        String     @id @default(cuid())
+  tripId    String
+  trip      Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  name      String
+  color     String // avatar color, assigned on join
+  isHost    Boolean    @default(false)
+  token     String     @unique // random secret stored in a cookie to identify the member
+  wishes    Wish[]
+  reactions Reaction[]
+
+  @@unique([tripId, name])
+}
+
+model Wish {
+  id          String     @id @default(cuid())
+  tripId      String
+  trip        Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      Member     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title       String
+  notes       String?
+  kind        WishKind // ACTIVITY or CONSTRAINT
+  priority    Priority // only meaningful for ACTIVITY
+  timeOfDay   TimeOfDay  @default(ANY)
+  durationHrs Float      @default(2)
+  costLevel   Int        @default(1) // 0=free .. 3=expensive
+  energy      Int        @default(1) // 0=chill .. 3=intense
+  tags        String     @default("") // comma-separated
+  done        Boolean    @default(false)
+  memory      String? // post-trip one-liner
+  photoUrl    String? // post-trip, R2 object key
+  reactions   Reaction[]
+  slots       PlanSlot[]
+  createdAt   DateTime   @default(now())
+
+  @@index([tripId])
+}
+
+enum WishKind {
+  ACTIVITY
+  CONSTRAINT
+}
+
+enum Priority {
+  MUST
+  LOVE
+  NICE
+}
+
+enum TimeOfDay {
+  EARLY_MORNING
+  MORNING
+  AFTERNOON
+  EVENING
+  NIGHT
+  ANY
+}
+
+model Reaction {
+  id       String        @id @default(cuid())
+  wishId   String
+  wish     Wish          @relation(fields: [wishId], references: [id], onDelete: Cascade)
+  memberId String
+  member   Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  value    ReactionValue
+
+  @@unique([wishId, memberId])
+  @@index([wishId])
+}
+
+enum ReactionValue {
+  IN
+  MAYBE
+  SKIP
+}
+
+model PlanSlot {
+  id        String    @id @default(cuid())
+  tripId    String
+  trip      Trip      @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  wishId    String
+  wish      Wish      @relation(fields: [wishId], references: [id], onDelete: Cascade)
+  dayIndex  Int // 0-based day of trip
+  timeOfDay TimeOfDay
+  track     SlotTrack // GROUP or SPLINTER
+  pinned    Boolean   @default(false) // manually placed; the generator must not move it
+
+  @@index([tripId])
+}
+
+enum SlotTrack {
+  GROUP
+  SPLINTER
+}

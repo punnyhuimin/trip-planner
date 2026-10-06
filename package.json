@@ -12,10 +12,17 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "postinstall": "prisma generate",
+    "db:migration:new": "node scripts/new-migration.mjs",
+    "db:migrate:local": "wrangler d1 migrations apply tripmaker --local",
+    "db:migrate:remote": "wrangler d1 migrations apply tripmaker --remote",
+    "db:query": "wrangler d1 execute tripmaker --local --command"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.8",
+    "@prisma/adapter-d1": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8"
@@ -29,8 +36,17 @@
     "eslint-config-next": "16.3.8",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.9.9",
+    "prisma": "^7.10.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "wrangler": "^4.147.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.4": true,
+    "esbuild@0.28.1": true,
+    "prisma@7.10.0": true,
+    "unrs-resolver@1.12.2": true,
+    "workerd@1.20261001.1": true,
+    "@prisma/engines@7.10.0": true
   }
 }

@@ -8,6 +8,15 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS",
   },
+  // D1 database. `database_id` is filled in once `wrangler d1 create tripmaker`
+  // has been run against a Cloudflare account; local dev doesn't need it.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tripmaker",
+      "migrations_dir": "migrations",
+    },
+  ],
   "observability": {
     "enabled": true,
   },
