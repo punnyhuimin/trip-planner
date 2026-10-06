@@ -1,6 +1,14 @@
 import { formatDateOnly, tripDays } from "@/lib/dates";
-import { getDb } from "@/lib/db";
-import type { SlotDTO, TimeBlock, TripState, WishDTO } from "@/lib/types";
+import { type Db, getDb } from "@/lib/db";
+import { detectWarnings } from "@/lib/planner";
+import type {
+  PlannerInput,
+  PlannerWish,
+  SlotDTO,
+  TimeBlock,
+  TripState,
+  WishDTO,
+} from "@/lib/types";
 
 /**
  * True when the client's `?since=` matches the trip's version, so the poll can
@@ -35,9 +43,8 @@ export function splitTags(tags: string): string[] {
   return tags ? tags.split(",").filter(Boolean) : [];
 }
 
-/** Everything a member's client needs, in one object. Never includes tokens. */
-export async function buildTripState(tripId: string, meId: string): Promise<TripState> {
-  const db = getDb();
+/** Loads one trip's rows with explicit selects (never tokens). */
+export async function loadTripData(db: Db, tripId: string) {
   const [trip, members, wishes, slots] = await Promise.all([
     db.trip.findUniqueOrThrow({
       where: { id: tripId },
@@ -74,7 +81,54 @@ export async function buildTripState(tripId: string, meId: string): Promise<Trip
       orderBy: [{ dayIndex: "asc" }, { id: "asc" }],
     }),
   ]);
+  return {
+    trip,
+    members,
+    wishes,
+    // ANY is never stored on a slot; the generator always picks a real block.
+    slots: slots.map((s): SlotDTO => ({ ...s, timeOfDay: s.timeOfDay as TimeBlock })),
+  };
+}
+type TripData = Awaited<ReturnType<typeof loadTripData>>;
 
+/** Maps database rows to the planner's own types. */
+export function toPlannerInput(data: TripData): PlannerInput {
+  return {
+    days: tripDays(data.trip.startDate, data.trip.endDate),
+    members: data.members.map((m) => ({ id: m.id, name: m.name })),
+    wishes: data.wishes.map((w): PlannerWish => ({
+      id: w.id,
+      authorId: w.authorId,
+      kind: w.kind,
+      priority: w.priority,
+      timeOfDay: w.timeOfDay,
+      durationHrs: w.durationHrs,
+      costLevel: w.costLevel,
+      energy: w.energy,
+      title: w.title,
+      notes: w.notes,
+      createdAt: w.createdAt,
+      reactions: w.reactions,
+    })),
+    pinnedSlots: data.slots
+      .filter((s) => s.pinned)
+      .map(({ wishId, dayIndex, timeOfDay, track, pinned }) => ({
+        wishId,
+        dayIndex,
+        timeOfDay,
+        track,
+        pinned,
+      })),
+  };
+}
+
+/**
+ * Everything a member's client needs, in one object. Never includes tokens.
+ * Warnings aren't stored: they're recomputed from the current slots each time.
+ */
+export async function buildTripState(tripId: string, meId: string): Promise<TripState> {
+  const data = await loadTripData(getDb(), tripId);
+  const { trip, members, wishes, slots } = data;
   return {
     trip: {
       code: trip.code,
@@ -92,9 +146,8 @@ export async function buildTripState(tripId: string, meId: string): Promise<Trip
       tags: splitTags(w.tags),
       createdAt: w.createdAt.toISOString(),
     })),
-    // ANY is never stored on a slot; the generator always picks a real block.
-    slots: slots.map((s): SlotDTO => ({ ...s, timeOfDay: s.timeOfDay as TimeBlock })),
-    warnings: [],
+    slots,
+    warnings: detectWarnings(toPlannerInput(data), slots),
     version: trip.version,
   };
 }
