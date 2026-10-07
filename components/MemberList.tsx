@@ -2,7 +2,16 @@ import { MemberDot } from "@/components/MemberDot";
 import { MAX_MEMBERS } from "@/lib/limits";
 import type { MemberDTO } from "@/lib/types";
 
-export function MemberList({ members, meId }: { members: MemberDTO[]; meId: string }) {
+export function MemberList({
+  members,
+  meId,
+  onRemove,
+}: {
+  members: MemberDTO[];
+  meId: string;
+  /** Set for the host, who can remove anyone but themselves. */
+  onRemove?: (member: MemberDTO) => void;
+}) {
   return (
     <div className="card p-5">
       <h2 className="flex items-baseline justify-between font-display text-lg font-semibold">
@@ -23,6 +32,16 @@ export function MemberList({ members, meId }: { members: MemberDTO[]; meId: stri
               <span className="ml-auto rounded-full bg-sun-soft px-2 py-0.5 text-xs font-semibold text-ink">
                 Host
               </span>
+            )}
+            {onRemove && m.id !== meId && (
+              <button
+                type="button"
+                onClick={() => onRemove(m)}
+                aria-label={`Remove ${m.name}`}
+                className="ml-auto rounded-full px-2 py-0.5 text-xs font-semibold text-muted hover:text-ink"
+              >
+                Remove
+              </button>
             )}
           </li>
         ))}
