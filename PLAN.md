@@ -211,6 +211,7 @@ All routes validate input with Zod and check the member cookie belongs to the tr
 | PUT | `/api/trips/[code]/wishes/[id]/reaction` | Set own reaction |
 | POST | `/api/trips/[code]/plan/generate` | Host only: rerun generator, keeping pinned slots |
 | PATCH | `/api/trips/[code]/plan/slots/[id]` | Host only: move a slot (sets `pinned = true`) |
+| DELETE | `/api/trips/[code]/members/[id]` | Host only: remove a member (and their wishes, reactions and slots) |
 | PATCH | `/api/trips/[code]/phase` | Host only: change trip phase |
 
 ---

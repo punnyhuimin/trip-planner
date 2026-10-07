@@ -76,3 +76,18 @@ export async function addMember(
     throw err;
   }
 }
+
+/**
+ * Removes a member of this trip; ids from other trips are a 404 and the host
+ * can't be removed. Their wishes, reactions and plan slots go with them
+ * (onDelete: Cascade), and their cookie stops working because the row is gone.
+ */
+export async function removeMember(db: Db, tripId: string, memberId: string): Promise<void> {
+  const member = await db.member.findFirst({
+    where: { id: memberId, tripId },
+    select: { id: true, isHost: true },
+  });
+  if (!member) throw new HttpError(404, "Member not found");
+  if (member.isHost) throw new HttpError(400, "The host can't be removed");
+  await db.member.delete({ where: { id: member.id } });
+}

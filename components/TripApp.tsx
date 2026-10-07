@@ -71,7 +71,9 @@ export function TripApp({ initialState }: { initialState: TripState }) {
 
   async function removeMember(target: MemberDTO) {
     if (
-      !window.confirm(`Remove ${target.name}? Their wishes and reactions will be deleted too.`)
+      !window.confirm(
+        `Remove ${target.name}? Their wishes, reactions and planned slots will be deleted too.`,
+      )
     ) {
       return;
     }
@@ -216,7 +218,7 @@ export function TripApp({ initialState }: { initialState: TripState }) {
         <MemberList
           members={members}
           meId={meId}
-          onRemove={me?.isHost && planning ? removeMember : undefined}
+          onRemove={me?.isHost ? removeMember : undefined}
         />
         <ShareCode code={trip.code} />
       </div>
