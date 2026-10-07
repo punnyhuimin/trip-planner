@@ -18,7 +18,7 @@ import { api } from "@/lib/api";
 import { formatDayLabel } from "@/lib/dates";
 import { useTripState } from "@/lib/hooks/useTripState";
 import { withReaction } from "@/lib/optimistic";
-import type { ReactionValue, SlotDTO, TripState, WishDTO } from "@/lib/types";
+import type { MemberDTO, ReactionValue, SlotDTO, TripState, WishDTO } from "@/lib/types";
 
 function isTab(value: string | null): value is TabId {
   return TABS.some((t) => t.id === value);
@@ -66,6 +66,23 @@ export function TripApp({ initialState }: { initialState: TripState }) {
       return;
     }
     notify("Wish deleted", "info");
+    void refresh();
+  }
+
+  async function removeMember(target: MemberDTO) {
+    if (
+      !window.confirm(
+        `Remove ${target.name}? Their wishes, reactions and planned slots will be deleted too.`,
+      )
+    ) {
+      return;
+    }
+    const res = await api(`/api/trips/${trip.code}/members/${target.id}`, "DELETE");
+    if (!res.ok) {
+      notify(`Couldn't remove ${target.name}. ${res.error}`);
+      return;
+    }
+    notify(`${target.name} removed`, "info");
     void refresh();
   }
 
@@ -198,7 +215,11 @@ export function TripApp({ initialState }: { initialState: TripState }) {
     ),
     group: (
       <div className="grid items-start gap-5 sm:grid-cols-2 [&>*]:min-w-0">
-        <MemberList members={members} meId={meId} />
+        <MemberList
+          members={members}
+          meId={meId}
+          onRemove={me?.isHost ? removeMember : undefined}
+        />
         <ShareCode code={trip.code} />
       </div>
     ),

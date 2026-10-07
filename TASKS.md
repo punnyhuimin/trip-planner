@@ -36,6 +36,7 @@ trip-planner/
 │     └─ [code]/
 │        ├─ join/route.ts              # POST join
 │        ├─ state/route.ts             # GET full state (polled)
+│        ├─ members/[id]/route.ts      # DELETE remove member (host)
 │        ├─ wishes/route.ts            # POST add wish
 │        ├─ wishes/[id]/route.ts       # PATCH / DELETE wish
 │        ├─ wishes/[id]/reaction/route.ts  # PUT own reaction
